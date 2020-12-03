@@ -28,6 +28,7 @@ import bgu.spl.mics.application.passiveObjects.Diary;
 public abstract class MicroService implements Runnable {
 
     protected static Diary diary;
+    private static AtomicInteger ThreadCounter = new AtomicInteger(0);
     private static AtomicInteger registeredMicroservices = new AtomicInteger(0);
     private static Object lock;
     private String name;
@@ -41,6 +42,7 @@ public abstract class MicroService implements Runnable {
      */
     public MicroService(String name) {
     	this.name = name;
+    	ThreadCounter.incrementAndGet();
     }
 
     /**
@@ -65,9 +67,7 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <T, E extends Event<T>> void subscribeEvent(Class<E> type, Callback<E> callback) {
-    	if (!instructions.containsKey(type)){
-    	    instructions.put(type,callback);
-        }
+        instructions.putIfAbsent(type,callback);
     	theMessageBus.subscribeEvent(type, this);
     }
 
@@ -92,7 +92,8 @@ public abstract class MicroService implements Runnable {
      *                 queue.
      */
     protected final <B extends Broadcast> void subscribeBroadcast(Class<B> type, Callback<B> callback) {
-    	
+        instructions.putIfAbsent(type,callback);
+        theMessageBus.subscribeBroadcast(type, this);
     }
 
     /**
@@ -107,10 +108,7 @@ public abstract class MicroService implements Runnable {
      *         			micro-service processing this event.
      * 	       			null in case no micro-service has subscribed to {@code e.getClass()}.
      */
-    protected final <T> Future<T> sendEvent(Event<T> e) {
-
-        return null; 
-    }
+    protected final <T> Future<T> sendEvent(Event<T> e) { return theMessageBus.sendEvent(e); }
 
     /**
      * A Micro-Service calls this method in order to send the broadcast message {@code b} using the message-bus
@@ -118,9 +116,7 @@ public abstract class MicroService implements Runnable {
      * <p>
      * @param b The broadcast message to send
      */
-    protected final void sendBroadcast(Broadcast b) {
-    	
-    }
+    protected final void sendBroadcast(Broadcast b) { theMessageBus.sendBroadcast(b); }
 
     /**
      * Completes the received request {@code e} with the result {@code result}
@@ -154,7 +150,7 @@ public abstract class MicroService implements Runnable {
      *         construction time and is used mainly for debugging purposes.
      */
     public final String getName() {
-        return null;
+        return name;
     }
 
     /**
@@ -167,7 +163,7 @@ public abstract class MicroService implements Runnable {
         theMessageBus.register(this);
         this.initialize();
         registeredMicroservices.incrementAndGet();
-        if (!registeredMicroservices.equals(4)) {
+        if (!registeredMicroservices.equals(ThreadCounter)) {
             try {lock.wait();}
             catch (InterruptedException i){}
         }
