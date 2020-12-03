@@ -17,7 +17,8 @@ import java.util.Vector;
 public class Ewoks {
 
     private Vector<Ewok> ewoks;
-    private Vector<Object> locks;//
+    private Vector<Object> locks;
+    private static Ewoks instance = null;
 
     public Ewoks(int ewoksSupplied){
         for (int i = 1; i<=ewoksSupplied; i++){
