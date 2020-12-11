@@ -2,13 +2,16 @@ package bgu.spl.mics.application.services;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 
 import bgu.spl.mics.Callback;
 import bgu.spl.mics.Future;
+import bgu.spl.mics.Message;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.messages.*;
 import bgu.spl.mics.application.passiveObjects.Attack;
 import bgu.spl.mics.application.passiveObjects.Diary;
+import bgu.spl.mics.MessageBusImpl;//only for debugging
 
 
 /**
@@ -23,6 +26,7 @@ public class LeiaMicroservice extends MicroService {
 
     private Attack[] attacks;
     private Future[] onGoingAttacks;
+    private MessageBusImpl messageBus = MessageBusImpl.getInstance();//only for debugging
     private final Callback<BeginEvent> beginEventCallback = (BeginEvent be)->{
         for (int attackEventRunnner = 0; attackEventRunnner<attacks.length; attackEventRunnner++){
             AttackEvent currAttack = new AttackEvent(attacks[attackEventRunnner]);
@@ -31,6 +35,7 @@ public class LeiaMicroservice extends MicroService {
         int futureRunner = 0;
         while (futureRunner<onGoingAttacks.length){
             onGoingAttacks[futureRunner].get();
+            if (!onGoingAttacks[futureRunner].isDone()) System.out.println(" future is not done ");
             futureRunner++;
         }
         DeactivationEvent deactivationEvent = new DeactivationEvent();

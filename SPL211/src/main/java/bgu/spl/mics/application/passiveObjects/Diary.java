@@ -14,7 +14,7 @@ public class Diary {
     private static class SingletonHolder {
         private static Diary instance = new Diary();
     }
-    public AtomicInteger totalAttacks;
+    public AtomicInteger totalAttacks = new AtomicInteger(0);
     public long HanSoloFinish;
     public long C3POFinish;
     public long R2D2Deactivate;
