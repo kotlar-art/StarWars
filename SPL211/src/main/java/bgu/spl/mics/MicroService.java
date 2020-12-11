@@ -163,7 +163,6 @@ public abstract class MicroService implements Runnable {
         theMessageBus.register(this);
         this.initialize();
         registeredMicroservices.incrementAndGet();
-        System.out.println(registeredMicroservices);
         synchronized (lock) {
             if (registeredMicroservices.get() != ThreadCounter.get()) {
                 try {

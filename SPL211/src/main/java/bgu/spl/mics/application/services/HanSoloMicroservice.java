@@ -34,12 +34,11 @@ public class HanSoloMicroservice extends MicroService {
         catch (InterruptedException i){}
         ewoks.release(required);
         this.complete(AE, true);
-        System.out.println("Han attack finish");
+        System.out.println(getName() + " attack finish");
         diary.HanSoloFinish = System.currentTimeMillis();
         diary.totalAttacks.incrementAndGet();
     };
     private final Callback<TerminationBroadcast> terminateCallback = (T)->{
-        System.out.println("Han is terminating");
         HanSoloMicroservice.this.terminate();
         diary.HanSoloTerminate = System.currentTimeMillis();
     };

@@ -33,7 +33,7 @@ public class C3POMicroservice extends MicroService {
         catch (InterruptedException i){}
         ewoks.release(required);
         this.complete(AE, true);
-        System.out.println("C3PO attack finish");
+        System.out.println(getName() + " attack finish");
         diary.C3POFinish = System.currentTimeMillis();
         diary.totalAttacks.incrementAndGet();
     };

@@ -15,9 +15,6 @@ public class MessageBusImpl implements MessageBus {
 	private ConcurrentHashMap<Class<? extends Event>, Queue<MicroService>> EventSubscribers;
 	private ConcurrentHashMap<Class<? extends Broadcast>, List<MicroService>> BroadcastSubscribers;
 	private ConcurrentHashMap<Event, Future> OnGoingEvents;
-	public ConcurrentHashMap getEventsubscribers(){ //only for debugging!!!!!!
-		return EventSubscribers;
-	}
 	private static class SingletonHolder {
 		private static MessageBusImpl instance = new MessageBusImpl();
 	}
@@ -40,9 +37,7 @@ public class MessageBusImpl implements MessageBus {
 			synchronized (EventSubscribers) {
 				if (!EventSubscribers.containsKey(type)) {
 					EventSubscribers.put(type, new ConcurrentLinkedQueue<MicroService>());
-					if (type.equals(AttackEvent.class)) System.out.println(m.getName() + " just created Attackeventsubscribers queue");
 				}
-
 			}
 		}
 		EventSubscribers.get(type).add(m);
@@ -50,14 +45,16 @@ public class MessageBusImpl implements MessageBus {
 
 	@Override
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
-		if (!BroadcastSubscribers.contains(type)) {
+		if (!BroadcastSubscribers.containsKey(type)) {
 			synchronized ((BroadcastSubscribers)) {
-				if (!BroadcastSubscribers.contains(type))
+				if (!BroadcastSubscribers.containsKey(type)) {
 					BroadcastSubscribers.put(type, new LinkedList<MicroService>());
+					System.out.println(m.getName() + " created Broadcast");
+				}
 			}
 		}
-		System.out.println(Thread.currentThread().getName());
 		BroadcastSubscribers.get(type).add(m);
+		System.out.println(m.getName() + " subscribedBroadcast");
     }
 
 	@Override @SuppressWarnings("unchecked")
@@ -75,12 +72,15 @@ public class MessageBusImpl implements MessageBus {
 		boolean needToAlert = false;
 		List<MicroService> subscribers = BroadcastSubscribers.get(b.getClass());
 		while (i<subscribers.size()){
+			if(subscribers.get(i) == null){
+				continue;
+			}
 			MicroService receiver = subscribers.get(i);
 			Queue<Message> receiverQ = MessageQueues.get(receiver);
-			if (receiverQ.isEmpty()) needToAlert = true;
+			if (receiverQ.isEmpty()) {needToAlert = true;}
 			receiverQ.add(b);
 			synchronized (receiverQ) {
-				if (needToAlert) receiverQ.notify();
+				if (needToAlert) {receiverQ.notify();}
 			}
 			i++;
 		}
@@ -93,11 +93,8 @@ public class MessageBusImpl implements MessageBus {
 		boolean needToAlert = false;
 		OnGoingEvents.put(e, f);
 		Queue<MicroService> receiversQ = EventSubscribers.get(e.getClass());
-		if (e.getClass().equals(AttackEvent.class)) System.out.println("queue's head is before remove is " + receiversQ.peek().getName());
-		System.out.println("just send an event of type " + e.getClass());
 		MicroService receiver = receiversQ.remove();
 		receiversQ.add(receiver);
-		if (e.getClass().equals(AttackEvent.class)) System.out.println("queue's head after remove is " + receiversQ.peek().getName());
 		ConcurrentLinkedQueue<Message> receiverQ = MessageQueues.get(receiver);
 		if (receiverQ.isEmpty()) needToAlert = true;
 		MessageQueues.get(receiver).add(e);
@@ -117,8 +114,7 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public void unregister(MicroService m) {
-		MessageQueues.remove(m);
+	public void unregister(MicroService m) { MessageQueues.remove(m);
 	}
 
 	@Override
