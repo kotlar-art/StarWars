@@ -13,17 +13,12 @@ public class MessageBusImpl implements MessageBus {
 	private ConcurrentHashMap<Class<? extends Event>, Queue<MicroService>> EventSubscribers;
 	private ConcurrentHashMap<Class<? extends Broadcast>, List<MicroService>> BroadcastSubscribers;
 	private ConcurrentHashMap<Event, Future> OnGoingEvents;
-	private static MessageBusImpl instance = null;
+	private static class SingletonHolder {
+		private static MessageBusImpl instance = new MessageBusImpl();
+	}
 
 	public static MessageBusImpl getInstance(){
-		if (instance==null){
-			synchronized (instance.getClass()){
-				if(instance==null){
-					instance = new MessageBusImpl();
-				}
-			}
-		}
-		return instance;
+		return SingletonHolder.instance;
 	}
 
 	private MessageBusImpl(){

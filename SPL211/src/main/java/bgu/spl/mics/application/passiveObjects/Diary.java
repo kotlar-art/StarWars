@@ -11,6 +11,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class Diary {
 
+    private static class SingletonHolder {
+        private static Diary instance = new Diary();
+    }
     public AtomicInteger totalAttacks;
     public long HanSoloFinish;
     public long C3POFinish;
@@ -21,4 +24,22 @@ public class Diary {
     public long R2D2Terminate;
     public long LandoTerminate;
 
+
+    public static Diary getInstance(){
+        return SingletonHolder.instance;
+    }
+
+    private Diary(){
+    }
+
+
+    //debug
+    @Override
+    public String toString() {
+        String string1 = "totalAttacks:" + totalAttacks + "\n" + "HanSoloFinish:" + HanSoloFinish + "\n";
+        String string2 = "C3POFinish:" + C3POFinish + "\n" + "R2D2Deactivate:" + R2D2Deactivate + "\n";
+        String string3 = "LeiaTerminate:" + LeiaTerminate + "\n" + "HanSoloTerminate:" + HanSoloTerminate + "\n";
+        String string4 = "C3POTerminate:" + C3POTerminate + "\n" + "R2D2Terminate" + R2D2Terminate + "\n" + "LandoTerminate" + LandoTerminate + "\n";
+        return string1 + string2 + string3 + string4;
+    }
 }

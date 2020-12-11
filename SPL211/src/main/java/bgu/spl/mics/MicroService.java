@@ -27,7 +27,7 @@ import bgu.spl.mics.application.passiveObjects.Diary;
  */
 public abstract class MicroService implements Runnable {
 
-    protected static Diary diary;
+    protected Diary diary = Diary.getInstance();
     private static AtomicInteger ThreadCounter = new AtomicInteger(0);
     private static AtomicInteger registeredMicroservices = new AtomicInteger(0);
     private static Object lock;
