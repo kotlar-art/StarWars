@@ -8,6 +8,7 @@ import bgu.spl.mics.Future;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.messages.*;
 import bgu.spl.mics.application.passiveObjects.Attack;
+import bgu.spl.mics.application.passiveObjects.Diary;
 
 
 /**
@@ -53,4 +54,5 @@ public class LeiaMicroservice extends MicroService {
         subscribeEvent(BeginEvent.class, beginEventCallback);
     	subscribeBroadcast(TerminationBroadcast.class, terminationCallback);
     }
+
 }

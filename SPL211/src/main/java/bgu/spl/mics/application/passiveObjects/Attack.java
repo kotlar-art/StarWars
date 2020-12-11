@@ -29,4 +29,9 @@ public class Attack {
     public int howLong(){
         return duration;
     }
+
+    @Override
+    public String toString() {
+        return serials.toString() + duration;
+    }
 }

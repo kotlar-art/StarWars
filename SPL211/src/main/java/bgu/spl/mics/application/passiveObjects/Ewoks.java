@@ -21,6 +21,10 @@ public class Ewoks {
     private static Ewoks instance = null;
 
     public Ewoks(int ewoksSupplied){
+        ewoks = new Vector<Ewok>(ewoksSupplied + 1);
+        locks = new Vector<Object>(ewoksSupplied + 1);
+        ewoks.add(null);
+        locks.add(null);
         for (int i = 1; i<=ewoksSupplied; i++){
             Ewok newEwok = new Ewok(i);
             ewoks.add(i, newEwok);
