@@ -30,7 +30,7 @@ public abstract class MicroService implements Runnable {
     protected Diary diary = Diary.getInstance();
     private static AtomicInteger ThreadCounter = new AtomicInteger(0);
     private static AtomicInteger registeredMicroservices = new AtomicInteger(0);
-    private static Object lock;
+    private static Object lock = new Object();
     private String name;
     private boolean toTerminate = false;
     private ConcurrentHashMap<Class<? extends Message>, Callback> instructions = new ConcurrentHashMap<Class<? extends Message>, Callback>();
@@ -163,13 +163,17 @@ public abstract class MicroService implements Runnable {
         theMessageBus.register(this);
         this.initialize();
         registeredMicroservices.incrementAndGet();
-        if (!registeredMicroservices.equals(ThreadCounter)) {
-            try {lock.wait();}
-            catch (InterruptedException i){}
-        }
-        else {
-            lock.notifyAll();
-            sendEvent(new BeginEvent());
+        System.out.println(registeredMicroservices);
+        synchronized (lock) {
+            if (registeredMicroservices.get() != ThreadCounter.get()) {
+                try {
+                    lock.wait();
+                } catch (InterruptedException i) {
+                }
+            } else {
+                lock.notifyAll();
+                sendEvent(new BeginEvent());
+            }
         }
     	while (!toTerminate){
             Message currentMission = null;

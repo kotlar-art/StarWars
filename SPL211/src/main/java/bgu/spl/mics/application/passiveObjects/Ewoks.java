@@ -52,7 +52,9 @@ public class Ewoks {
         for (int i = 0; i<usedEwoks.length; i++){
             int toRelease = usedEwoks[i];
             ewoks.get(toRelease).release();
-            locks.get(toRelease).notify();
+            synchronized (locks.get(toRelease)) {
+                locks.get(toRelease).notify();
+            }
         }
     }
 
