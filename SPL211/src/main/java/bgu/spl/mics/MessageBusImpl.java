@@ -33,27 +33,18 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
 
-		if (!EventSubscribers.containsKey(type)){
 			synchronized (EventSubscribers) {
-				if (!EventSubscribers.containsKey(type)) {
-					EventSubscribers.put(type, new ConcurrentLinkedQueue<MicroService>());
-				}
+					EventSubscribers.putIfAbsent(type, new ConcurrentLinkedQueue<MicroService>());
+					EventSubscribers.get(type).add(m);
 			}
-		}
-		EventSubscribers.get(type).add(m);
 	}
 
 	@Override
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
-		if (!BroadcastSubscribers.containsKey(type)) {
 			synchronized ((BroadcastSubscribers)) {
-				if (!BroadcastSubscribers.containsKey(type)) {
-					BroadcastSubscribers.put(type, new LinkedList<MicroService>());
-					System.out.println(m.getName() + " created Broadcast");
-				}
+					BroadcastSubscribers.putIfAbsent(type, new LinkedList<MicroService>());
+					BroadcastSubscribers.get(type).add(m);
 			}
-		}
-		BroadcastSubscribers.get(type).add(m);
 		System.out.println(m.getName() + " subscribedBroadcast");
     }
 
@@ -71,10 +62,8 @@ public class MessageBusImpl implements MessageBus {
 		int i = 0;
 		boolean needToAlert = false;
 		List<MicroService> subscribers = BroadcastSubscribers.get(b.getClass());
+		System.out.println(subscribers.size());
 		while (i<subscribers.size()){
-			if(subscribers.get(i) == null){
-				continue;
-			}
 			MicroService receiver = subscribers.get(i);
 			Queue<Message> receiverQ = MessageQueues.get(receiver);
 			if (receiverQ.isEmpty()) {needToAlert = true;}
