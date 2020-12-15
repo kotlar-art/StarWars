@@ -23,7 +23,6 @@ public class R2D2Microservice extends MicroService {
         try {Thread.sleep(DeactivationDuration);}
         catch (InterruptedException i){}
         diary.R2D2Deactivate = System.currentTimeMillis();
-        System.out.println("deactivation done");
         sendEvent(new BombDestroyerEvent());
     };
     private Callback<TerminationBroadcast> terminationBroadcastCallback = (TerminationBroadcast)->{

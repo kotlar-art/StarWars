@@ -21,7 +21,6 @@ public class LandoMicroservice  extends MicroService {
         try {Thread.sleep(LandoMicroservice.this.getDuration());}
         catch (InterruptedException i) {}
         complete(b, true);
-        System.out.println("Lando is doing the bomb ");
         sendBroadcast(new TerminationBroadcast());
     };
 

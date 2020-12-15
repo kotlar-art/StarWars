@@ -30,7 +30,6 @@ public class LeiaMicroservice extends MicroService {
         for (int attackEventRunnner = 0; attackEventRunnner<attacks.length; attackEventRunnner++){
             AttackEvent currAttack = new AttackEvent(attacks[attackEventRunnner]);
             onGoingAttacks[attackEventRunnner] = sendEvent(currAttack);
-            System.out.println("Leia added an attack");
         }
         int futureRunner = 0;
         while (futureRunner<onGoingAttacks.length){

@@ -12,9 +12,11 @@ import bgu.spl.mics.application.messages.BombDestroyerEvent;
 public class MessageBusImpl implements MessageBus {
 
 	private ConcurrentHashMap<MicroService, ConcurrentLinkedQueue<Message>> MessageQueues;
-	private ConcurrentHashMap<Class<? extends Event>, Queue<MicroService>> EventSubscribers;
+	private ConcurrentHashMap<Class<? extends Event>, LinkedBlockingQueue<MicroService>> EventSubscribers;
 	private ConcurrentHashMap<Class<? extends Broadcast>, List<MicroService>> BroadcastSubscribers;
 	private ConcurrentHashMap<Event, Future> OnGoingEvents;
+	private ConcurrentHashMap<MicroService, LinkedList<Class<? extends Event>>> UnregistermapE;
+	private ConcurrentHashMap<MicroService, LinkedList<Class<? extends Broadcast>>> UnregistermapB;
 	private static class SingletonHolder {
 		private static MessageBusImpl instance = new MessageBusImpl();
 	}
@@ -25,27 +27,32 @@ public class MessageBusImpl implements MessageBus {
 
 	private MessageBusImpl(){
 		MessageQueues = new ConcurrentHashMap<MicroService, ConcurrentLinkedQueue<Message>>();
-		EventSubscribers = new ConcurrentHashMap<Class<? extends Event>, Queue<MicroService>>();
+		EventSubscribers = new ConcurrentHashMap<Class<? extends Event>, LinkedBlockingQueue<MicroService>>();
 		BroadcastSubscribers = new ConcurrentHashMap<Class<? extends Broadcast>, List<MicroService>>();
 		OnGoingEvents = new ConcurrentHashMap<Event, Future>();
+		UnregistermapE = new ConcurrentHashMap<MicroService, LinkedList<Class<? extends Event>>>();
+		UnregistermapB = new ConcurrentHashMap<MicroService, LinkedList<Class<? extends Broadcast>>>();
 	}
 
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
-
 			synchronized (EventSubscribers) {
-					EventSubscribers.putIfAbsent(type, new ConcurrentLinkedQueue<MicroService>());
-					EventSubscribers.get(type).add(m);
+				EventSubscribers.putIfAbsent(type, new LinkedBlockingQueue<MicroService>());
+				EventSubscribers.get(type).add(m);
+				UnregistermapE.putIfAbsent(m, new LinkedList<Class<? extends Event>>());
+				UnregistermapE.get(m).add(type);
 			}
 	}
 
 	@Override
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
-			synchronized ((BroadcastSubscribers)) {
-					BroadcastSubscribers.putIfAbsent(type, new LinkedList<MicroService>());
-					BroadcastSubscribers.get(type).add(m);
+			synchronized (BroadcastSubscribers) {
+				BroadcastSubscribers.putIfAbsent(type, new LinkedList<MicroService>());
+				BroadcastSubscribers.get(type).add(m);
+				UnregistermapB.putIfAbsent(m, new LinkedList<Class<? extends Broadcast>>());
+				UnregistermapB.get(m).add(type);
 			}
-		System.out.println(m.getName() + " subscribedBroadcast");
+		System.out.println(UnregistermapB.get(m).size());
     }
 
 	@Override @SuppressWarnings("unchecked")
@@ -62,12 +69,15 @@ public class MessageBusImpl implements MessageBus {
 		int i = 0;
 		boolean needToAlert = false;
 		List<MicroService> subscribers = BroadcastSubscribers.get(b.getClass());
-		System.out.println(subscribers.size());
 		while (i<subscribers.size()){
 			MicroService receiver = subscribers.get(i);
 			Queue<Message> receiverQ = MessageQueues.get(receiver);
+			if (receiverQ == null){
+				i++;
+				continue;
+			}
 			if (receiverQ.isEmpty()) {needToAlert = true;}
-			receiverQ.add(b);
+				receiverQ.add(b);
 			synchronized (receiverQ) {
 				if (needToAlert) {receiverQ.notify();}
 			}
@@ -75,26 +85,32 @@ public class MessageBusImpl implements MessageBus {
 		}
 	}
 
-	
 	@Override
 	public <T> Future<T> sendEvent(Event<T> e) {
 		Future<T> f = new Future<>();
 		boolean needToAlert = false;
 		OnGoingEvents.put(e, f);
-		Queue<MicroService> receiversQ = EventSubscribers.get(e.getClass());
-		MicroService receiver = receiversQ.remove();
-		receiversQ.add(receiver);
-		ConcurrentLinkedQueue<Message> receiverQ = MessageQueues.get(receiver);
-		if (receiverQ.isEmpty()) needToAlert = true;
-		MessageQueues.get(receiver).add(e);
-
-		if (needToAlert) {
-			synchronized (receiverQ) {
-				receiverQ.notify();
-			}
+		LinkedBlockingQueue<MicroService> receiversQ = EventSubscribers.get(e.getClass());
+		if(receiversQ == null || receiversQ.isEmpty()){
+			return null;
 		}
+		MicroService receiver;
+		synchronized (e.getClass()) {
+			receiver = receiversQ.remove();
+			receiversQ.add(receiver);
+		}
+			ConcurrentLinkedQueue<Message> receiverQ = MessageQueues.get(receiver);
+			if (receiverQ.isEmpty()) needToAlert = true;
+			MessageQueues.get(receiver).add(e);
+
+			if (needToAlert) {
+				synchronized (receiverQ) {
+					receiverQ.notify();
+				}
+			}
 		return f;
 	}
+	
 
 	@Override
 	public void register(MicroService m) {
@@ -103,7 +119,22 @@ public class MessageBusImpl implements MessageBus {
 	}
 
 	@Override
-	public void unregister(MicroService m) { MessageQueues.remove(m);
+	public void unregister(MicroService m) {
+		if(UnregistermapE.get(m) != null) {
+			for (Class<? extends Event> event : UnregistermapE.get(m)) {
+				synchronized (EventSubscribers.get(event)) {
+					EventSubscribers.get(event).remove(m);
+				}
+			}
+		}
+		if(UnregistermapB.get(m) != null) {
+			for (Class<? extends Broadcast> broadcast : UnregistermapB.get(m)) {
+				BroadcastSubscribers.get(broadcast).remove(m);
+			}
+		}
+		UnregistermapB.remove(m);
+		UnregistermapE.remove(m);
+		MessageQueues.remove(m);
 	}
 
 	@Override

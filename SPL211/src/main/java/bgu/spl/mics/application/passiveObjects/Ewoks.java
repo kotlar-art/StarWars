@@ -18,7 +18,6 @@ public class Ewoks {
 
     private Vector<Ewok> ewoks;
     private Vector<Object> locks;
-    private static Ewoks instance = null;
     private static class SingletonHolder {
         private static Ewoks instance = new Ewoks();
     }

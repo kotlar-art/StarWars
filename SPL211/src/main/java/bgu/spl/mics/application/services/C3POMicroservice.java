@@ -33,8 +33,8 @@ public class C3POMicroservice extends MicroService {
         catch (InterruptedException i){}
         ewoks.release(required);
         this.complete(AE, true);
-        System.out.println(getName() + " attack finish");
         diary.C3POFinish = System.currentTimeMillis();
+        System.out.println(this.getName() +" finished attack: " + System.currentTimeMillis());
         diary.totalAttacks.incrementAndGet();
     };
     private final Callback terminationCallback = (T)->{
@@ -42,14 +42,16 @@ public class C3POMicroservice extends MicroService {
         diary.C3POTerminate = System.currentTimeMillis();
     };
 
-    public C3POMicroservice(Ewoks ewoks) {
+    public C3POMicroservice() {
         super("C3PO");
-        this.ewoks = ewoks;
+        this.ewoks = Ewoks.getInstance();
     }
 
-    public C3POMicroservice(){
-        super("C3PO");
+    public C3POMicroservice(String name) {
+        super(name);
+        this.ewoks = Ewoks.getInstance();
     }
+
 
     @Override
     protected void initialize() {

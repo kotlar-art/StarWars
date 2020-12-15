@@ -34,8 +34,8 @@ public class HanSoloMicroservice extends MicroService {
         catch (InterruptedException i){}
         ewoks.release(required);
         this.complete(AE, true);
-        System.out.println(getName() + " attack finish");
         diary.HanSoloFinish = System.currentTimeMillis();
+        System.out.println(this.getName() +" finished attack: " + System.currentTimeMillis());
         diary.totalAttacks.incrementAndGet();
     };
     private final Callback<TerminationBroadcast> terminateCallback = (T)->{
@@ -43,9 +43,13 @@ public class HanSoloMicroservice extends MicroService {
         diary.HanSoloTerminate = System.currentTimeMillis();
     };
 
-    public HanSoloMicroservice(Ewoks ewoks) {
+    public HanSoloMicroservice() {
         super("Han");
-        this.ewoks = ewoks;
+        this.ewoks = Ewoks.getInstance();
+    }
+    public HanSoloMicroservice(String name) {
+        super(name);
+        this.ewoks = Ewoks.getInstance();
     }
 
     @Override
