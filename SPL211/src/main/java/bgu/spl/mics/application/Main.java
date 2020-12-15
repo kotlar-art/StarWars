@@ -21,14 +21,15 @@ public class Main {
 		long LandoDuration = input.getLando();
 		long R2D2Duration = input.getR2D2();
 		Attack[] attacks = input.getAttacks();
-		Ewoks ewoks = new Ewoks(ewoksSupplied);
+		Ewoks ewoks = Ewoks.getInstance();
+		ewoks.setEwoks(ewoksSupplied);
 
 		Thread Leia = new Thread(new LeiaMicroservice(attacks));
 		Thread HanSolo = new Thread(new HanSoloMicroservice(ewoks));
 		Thread C3PO = new Thread(new C3POMicroservice(ewoks));
 		Thread R2D2 = new Thread(new R2D2Microservice(R2D2Duration));
 		Thread Lando = new Thread(new LandoMicroservice(LandoDuration));
-
+		System.out.println(System.currentTimeMillis());
 		Leia.start();
 		HanSolo.start();
 		C3PO.start();

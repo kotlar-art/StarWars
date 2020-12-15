@@ -19,8 +19,17 @@ public class Ewoks {
     private Vector<Ewok> ewoks;
     private Vector<Object> locks;
     private static Ewoks instance = null;
+    private static class SingletonHolder {
+        private static Ewoks instance = new Ewoks();
+    }
 
-    public Ewoks(int ewoksSupplied){
+    public static Ewoks getInstance(){
+        return SingletonHolder.instance;
+    }
+
+    private Ewoks(){ }
+
+    public void setEwoks(int ewoksSupplied){
         ewoks = new Vector<Ewok>(ewoksSupplied + 1);
         locks = new Vector<Object>(ewoksSupplied + 1);
         ewoks.add(null);
