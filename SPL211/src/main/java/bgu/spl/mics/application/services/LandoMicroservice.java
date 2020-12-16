@@ -20,7 +20,6 @@ public class LandoMicroservice  extends MicroService {
     private final Callback<BombDestroyerEvent> bombDestroyerEventCallback = (BombDestroyerEvent b)->{
         try {Thread.sleep(LandoMicroservice.this.getDuration());}
         catch (InterruptedException i) {}
-        complete(b, true);
         sendBroadcast(new TerminationBroadcast());
     };
 

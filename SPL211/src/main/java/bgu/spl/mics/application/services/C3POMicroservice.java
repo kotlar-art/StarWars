@@ -34,7 +34,6 @@ public class C3POMicroservice extends MicroService {
         ewoks.release(required);
         this.complete(AE, true);
         diary.C3POFinish = System.currentTimeMillis();
-        System.out.println(this.getName() +" finished attack: " + System.currentTimeMillis());
         diary.totalAttacks.incrementAndGet();
     };
     private final Callback terminationCallback = (T)->{

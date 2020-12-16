@@ -116,7 +116,8 @@ public abstract class MicroService implements Runnable {
      * <p>
      * @param b The broadcast message to send
      */
-    protected final void sendBroadcast(Broadcast b) { theMessageBus.sendBroadcast(b); }
+    protected final void sendBroadcast(Broadcast b) {
+        theMessageBus.sendBroadcast(b); }
 
     /**
      * Completes the received request {@code e} with the result {@code result}
@@ -174,16 +175,19 @@ public abstract class MicroService implements Runnable {
                 sendEvent(new BeginEvent());
             }
         }
-    	while (!toTerminate){
+    	while (!toTerminate) {
             Message currentMission = null;
-    	    try {
-    	        currentMission = theMessageBus.awaitMessage(this);
-    	    }
-    	    catch (InterruptedException i){};
-    	    Callback currentTask = instructions.get(currentMission.getClass());
-    	    currentTask.call(currentMission);
+            try {
+                currentMission = theMessageBus.awaitMessage(this);
+            } catch (InterruptedException i) {
+            }
+            ;
+            Callback currentTask = instructions.get(currentMission.getClass());
+            currentTask.call(currentMission);
         }
-    	theMessageBus.unregister(this);
+            theMessageBus.unregister(this);
+            ThreadCounter.decrementAndGet();
+            registeredMicroservices.decrementAndGet();
     }
 
 }

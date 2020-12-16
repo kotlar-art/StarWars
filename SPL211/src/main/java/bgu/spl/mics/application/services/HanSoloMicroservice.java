@@ -35,7 +35,6 @@ public class HanSoloMicroservice extends MicroService {
         ewoks.release(required);
         this.complete(AE, true);
         diary.HanSoloFinish = System.currentTimeMillis();
-        System.out.println(this.getName() +" finished attack: " + System.currentTimeMillis());
         diary.totalAttacks.incrementAndGet();
     };
     private final Callback<TerminationBroadcast> terminateCallback = (T)->{

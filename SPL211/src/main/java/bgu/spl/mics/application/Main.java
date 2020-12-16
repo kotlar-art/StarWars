@@ -1,6 +1,7 @@
 package bgu.spl.mics.application;
 import bgu.spl.mics.Input;
 import bgu.spl.mics.JsonInputReader;
+import bgu.spl.mics.MessageBusImpl;
 import bgu.spl.mics.MicroService;
 import bgu.spl.mics.application.passiveObjects.Attack;
 import bgu.spl.mics.application.passiveObjects.Diary;
@@ -17,44 +18,48 @@ import java.io.IOException;
  * In the end, you should output a JSON.
  */
 public class Main {
-	public static void main(String[] args) throws IOException {
-		JsonInputReader reader = new JsonInputReader();
-		Input input = reader.getInputFromJson("./src/input.json.txt");
-		int ewoksSupplied = input.getEwoks();
-		long LandoDuration = input.getLando();
-		long R2D2Duration = input.getR2D2();
-		Attack[] attacks = input.getAttacks();
-		Ewoks ewoks = Ewoks.getInstance();
-		ewoks.setEwoks(ewoksSupplied);
-		System.out.println(System.currentTimeMillis());
+    public static void main(String[] args) {
+        Input input = new Input();
+        try {
+            input = JsonInputReader.getInputFromJson("./input.json");
+        } catch (IOException e) {
+        }
 
-		Thread Leia = new Thread(new LeiaMicroservice(attacks));
-		Thread HanSolo = new Thread(new HanSoloMicroservice());
-		Thread C3PO = new Thread(new C3POMicroservice());
-		Thread R2D2 = new Thread(new R2D2Microservice(R2D2Duration));
-		Thread Lando = new Thread(new LandoMicroservice(LandoDuration));
-		Leia.start();
-		HanSolo.start();
-		C3PO.start();
-		R2D2.start();
-		Lando.start();
+        int ewoksSupplied = input.getEwoks();
+        long LandoDuration = input.getLando();
+        long R2D2Duration = input.getR2D2();
+        Attack[] attacks = input.getAttacks();
+        Ewoks ewoks = Ewoks.getInstance();
+        ewoks.setEwoks(ewoksSupplied);
 
-		try {
-			Leia.join();
-			HanSolo.join();
-			C3PO.join();
-			R2D2.join();
-			Lando.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+        Thread Leia = new Thread(new LeiaMicroservice(attacks));
+        Thread Han = new Thread(new HanSoloMicroservice());
+        Thread C3PO = new Thread(new C3POMicroservice());
+        Thread R2D2 = new Thread(new R2D2Microservice(R2D2Duration));
+        Thread Lando = new Thread(new LandoMicroservice(LandoDuration));
+        Leia.start();
+        Han.start();
+        C3PO.start();
+        R2D2.start();
+        Lando.start();
+        try {
+            Leia.join();
+            Han.join();
+            C3PO.join();
+            R2D2.join();
+            Lando.join();
+        } catch (InterruptedException e) {
+        }
+        try {
+            Diary diary = Diary.getInstance();
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            FileWriter writer = new FileWriter("Output.json");
+            gson.toJson(diary, writer);
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+        }
+        MessageBusImpl.reset();
 
-		Diary diary = Diary.getInstance();
-		System.out.println(diary.R2D2Terminate);
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-		FileWriter writer = new FileWriter("./src/output.json.txt");
-		gson.toJson(diary,writer);
-		writer.flush();
-		writer.close();
-	}
+    }
 }
