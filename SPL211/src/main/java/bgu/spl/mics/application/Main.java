@@ -21,7 +21,7 @@ public class Main {
     public static void main(String[] args) {
         Input input = new Input();
         try {
-            input = JsonInputReader.getInputFromJson("./input.json");
+            input = JsonInputReader.getInputFromJson(args[0]);
         } catch (IOException e) {
         }
 
@@ -53,7 +53,7 @@ public class Main {
         try {
             Diary diary = Diary.getInstance();
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            FileWriter writer = new FileWriter("Output.json");
+            FileWriter writer = new FileWriter(args[1]);
             gson.toJson(diary, writer);
             writer.flush();
             writer.close();
