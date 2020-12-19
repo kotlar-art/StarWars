@@ -28,13 +28,13 @@ import bgu.spl.mics.application.passiveObjects.Diary;
 public abstract class MicroService implements Runnable {
 
     protected Diary diary = Diary.getInstance();
-    private static AtomicInteger ThreadCounter = new AtomicInteger(0);//is used to keep track of how many microservices are there
-    private static AtomicInteger registeredMicroservices = new AtomicInteger(0);//is used to keep track of how many microservices are registered
-    private static Object lock = new Object(); //used to synchrocize the start of the different message loops
+    private static AtomicInteger ThreadCounter = new AtomicInteger(0);
+    private static AtomicInteger registeredMicroservices = new AtomicInteger(0);
+    private static Object lock = new Object();
     private String name;
     private boolean toTerminate = false;
-    private ConcurrentHashMap<Class<? extends Message>, Callback> instructions = new ConcurrentHashMap<Class<? extends Message>, Callback>();//this hash map matches the message type
-    private MessageBusImpl theMessageBus = MessageBusImpl.getInstance();                                            //to the action necessary when receiving such message
+    private ConcurrentHashMap<Class<? extends Message>, Callback> instructions = new ConcurrentHashMap<Class<? extends Message>, Callback>();
+    private MessageBusImpl theMessageBus = MessageBusImpl.getInstance();
 
     /**
      * @param name the micro-service name (used mainly for debugging purposes -
@@ -161,10 +161,10 @@ public abstract class MicroService implements Runnable {
     @Override
     public final void run() {
 
-        theMessageBus.register(this);                               //this code segment's purpose is to make sure all the microservices
-        this.initialize();                                             //in the program are registered before the first event is sent
-        registeredMicroservices.incrementAndGet();                     //
-        synchronized (lock) {                                          //
+        theMessageBus.register(this);
+        this.initialize();
+        registeredMicroservices.incrementAndGet();
+        synchronized (lock) {
             if (registeredMicroservices.get() != ThreadCounter.get()) {
                 try {
                     lock.wait();
@@ -172,8 +172,7 @@ public abstract class MicroService implements Runnable {
                 }
             } else {
                 lock.notifyAll();
-                sendEvent(new BeginEvent());//the last one to register send this event, which only the supervising microservice (leia in this case) is subscribed to.
-                                                // it's callback is to start sending events to the other microservices, who we know are registered
+                sendEvent(new BeginEvent());
             }
         }
     	while (!toTerminate) {

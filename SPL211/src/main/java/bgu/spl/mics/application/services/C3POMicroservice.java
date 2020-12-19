@@ -18,17 +18,17 @@ import java.util.Arrays;
  */
 public class C3POMicroservice extends MicroService {
 
-    private Ewoks ewoks;//C3PO must have access to Ewoks for the attacks
+    private Ewoks ewoks;
     private final Callback<AttackEvent> attackCallback = (AttackEvent AE)->{
         Attack a = AE.getAttack();
         int[] required = new int[a.getEwoks().size()];
-        for (int i = 0; i<a.getEwoks().size(); i++){//he gets the information about the required ewoks for the attack
+        for (int i = 0; i<a.getEwoks().size(); i++){
             required[i] = a.getEwoks().get(i);
         }
-        Arrays.sort(required);//this so Han and C3PO don't find themselves in a deadlock. they will ask for ewoks in the same order
+        Arrays.sort(required);
         ewoks.acquire(required);
         try {
-            Thread.sleep(a.howLong());//he attacks
+            Thread.sleep(a.howLong());
         }
         catch (InterruptedException i){}
         ewoks.release(required);
