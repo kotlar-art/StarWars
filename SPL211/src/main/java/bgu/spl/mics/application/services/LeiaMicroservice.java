@@ -25,15 +25,16 @@ import bgu.spl.mics.application.passiveObjects.Diary;
 public class LeiaMicroservice extends MicroService {
 
     private Attack[] attacks;
-    private Future[] onGoingAttacks;
+    private Future[] onGoingAttacks;//here she keeps the futures of the attackevents
     private final Callback<BeginEvent> beginEventCallback = (BeginEvent be)->{
         for (int attackEventRunnner = 0; attackEventRunnner<attacks.length; attackEventRunnner++){
             AttackEvent currAttack = new AttackEvent(attacks[attackEventRunnner]);
-            onGoingAttacks[attackEventRunnner] = sendEvent(currAttack);
+            onGoingAttacks[attackEventRunnner] = sendEvent(currAttack);//for every attackevent sent, it's future is stored in OnGoingAttacks
         }
         int futureRunner = 0;
         while (futureRunner<onGoingAttacks.length){
-            onGoingAttacks[futureRunner].get();
+            onGoingAttacks[futureRunner].get();//leia only moves forward when the current future is resolved,
+                                                        // that way she knows that if she reached the end of the array, all the attacks were carried out
             futureRunner++;
         }
         DeactivationEvent deactivationEvent = new DeactivationEvent();

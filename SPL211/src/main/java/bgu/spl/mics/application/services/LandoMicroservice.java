@@ -18,9 +18,9 @@ public class LandoMicroservice  extends MicroService {
         diary.LandoTerminate = System.currentTimeMillis();
     };
     private final Callback<BombDestroyerEvent> bombDestroyerEventCallback = (BombDestroyerEvent b)->{
-        try {Thread.sleep(LandoMicroservice.this.getDuration());}
+        try {Thread.sleep(LandoMicroservice.this.getDuration());}//he destroys the deathstar
         catch (InterruptedException i) {}
-        sendBroadcast(new TerminationBroadcast());
+        sendBroadcast(new TerminationBroadcast());//he informs everyone that the mission is accomplished and they can terminate
     };
 
     public LandoMicroservice(long duration) {

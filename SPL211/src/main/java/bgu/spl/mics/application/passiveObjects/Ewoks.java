@@ -16,8 +16,8 @@ import java.util.Vector;
  */
 public class Ewoks {
 
-    private Vector<Ewok> ewoks; //list of the ewoks available
-    private Vector<Object> locks; // lock is created for each ewok, for sync purposes
+    private Vector<Ewok> ewoks;
+    private Vector<Object> locks;
     private static class SingletonHolder {
         private static Ewoks instance = new Ewoks();
     }
@@ -42,12 +42,12 @@ public class Ewoks {
 
     public void acquire(int[] required){
         for (int i = 0; i<required.length; i++){
-            Object currentLock = locks.get(required[i]); //choosing the compatible lock for the ewok required
+            Object currentLock = locks.get(required[i]);
             synchronized (currentLock){
                 Ewok curr = ewoks.get(required[i]);
                 while (!curr.getAvailability()){
                     try {
-                        currentLock.wait(); //waiting until this certain ewok is available
+                        currentLock.wait();
                     }
                     catch (InterruptedException IE){};
                 }
@@ -60,7 +60,7 @@ public class Ewoks {
         for (int i = 0; i<usedEwoks.length; i++){
             int toRelease = usedEwoks[i];
             ewoks.get(toRelease).release();
-            synchronized (locks.get(toRelease)) { //releasing the ewoks and notifying on each of their lock so if anyone is waiting he can get hold of them
+            synchronized (locks.get(toRelease)) {
                 locks.get(toRelease).notify();
             }
         }
