@@ -11,12 +11,12 @@ import bgu.spl.mics.application.messages.BombDestroyerEvent;
  */
 public class MessageBusImpl implements MessageBus {
 
-	private ConcurrentHashMap<MicroService, ConcurrentLinkedQueue<Message>> MessageQueues;
-	private ConcurrentHashMap<Class<? extends Event>, LinkedBlockingQueue<MicroService>> EventSubscribers;
-	private ConcurrentHashMap<Class<? extends Broadcast>, Vector<MicroService>> BroadcastSubscribers;
-	private ConcurrentHashMap<Event, Future> OnGoingEvents;
-	private ConcurrentHashMap<MicroService, LinkedList<Class<? extends Event>>> UnregistermapE;
-	private ConcurrentHashMap<MicroService, LinkedList<Class<? extends Broadcast>>> UnregistermapB;
+	private ConcurrentHashMap<MicroService, ConcurrentLinkedQueue<Message>> MessageQueues; //will keep each microservice's message queues
+	private ConcurrentHashMap<Class<? extends Event>, LinkedBlockingQueue<MicroService>> EventSubscribers; //will keep which microserivce registered to which event
+	private ConcurrentHashMap<Class<? extends Broadcast>, Vector<MicroService>> BroadcastSubscribers; //will keep which microserivce registered to which broadcast
+	private ConcurrentHashMap<Event, Future> OnGoingEvents; //will connect each event with the compatible future
+	private ConcurrentHashMap<MicroService, LinkedList<Class<? extends Event>>> UnregistermapE; //reverse microservice-event map
+	private ConcurrentHashMap<MicroService, LinkedList<Class<? extends Broadcast>>> UnregistermapB; //reverse microservice-broadcast map
 
 	private static class SingletonHolder {
 		private static MessageBusImpl instance = new MessageBusImpl();
@@ -47,8 +47,8 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public <T> void subscribeEvent(Class<? extends Event<T>> type, MicroService m) {
 		synchronized (EventSubscribers) {
-			EventSubscribers.putIfAbsent(type, new LinkedBlockingQueue<MicroService>());
-			EventSubscribers.get(type).add(m);
+			EventSubscribers.putIfAbsent(type, new LinkedBlockingQueue<MicroService>()); //creating a new queue for the event if not existed
+			EventSubscribers.get(type).add(m); //registering to an event
 			UnregistermapE.putIfAbsent(m, new LinkedList<Class<? extends Event>>());
 			UnregistermapE.get(m).add(type);
 		}
@@ -57,8 +57,8 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public void subscribeBroadcast(Class<? extends Broadcast> type, MicroService m) {
 		synchronized (BroadcastSubscribers) {
-			BroadcastSubscribers.putIfAbsent(type, new Vector<MicroService>());
-			BroadcastSubscribers.get(type).add(m);
+			BroadcastSubscribers.putIfAbsent(type, new Vector<MicroService>()); //creating a new list for the broadcast if not existed
+			BroadcastSubscribers.get(type).add(m); //registering to the broadcast
 			UnregistermapB.putIfAbsent(m, new LinkedList<Class<? extends Broadcast>>());
 			UnregistermapB.get(m).add(type);
 		}
@@ -67,9 +67,9 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	@SuppressWarnings("unchecked")
 	public <T> void complete(Event<T> e, T result) {
-		OnGoingEvents.get(e).resolve(result);
+		OnGoingEvents.get(e).resolve(result); //resolving the future
 		synchronized (OnGoingEvents.get(e)) {
-			OnGoingEvents.get(e).notifyAll();
+			OnGoingEvents.get(e).notifyAll(); //if someone is waiting in the event to see if it's resolved, notifying it
 		}
 		OnGoingEvents.remove(e);
 	}
@@ -79,18 +79,18 @@ public class MessageBusImpl implements MessageBus {
 		int i = 0;
 		boolean needToAlert = false;
 		List<MicroService> subscribers = BroadcastSubscribers.get(b.getClass());
-		synchronized (BroadcastSubscribers) {
+		synchronized (BroadcastSubscribers) { //syncing because when unregistrating we can get outofbound exception
 			while (i < subscribers.size()) {
-				MicroService receiver = subscribers.get(i);
+				MicroService receiver = subscribers.get(i); //getting the microservice from the broadcast list
 				Queue<Message> receiverQ = MessageQueues.get(receiver);
 				if (receiverQ.isEmpty()) {
 					needToAlert = true;
 				}
-				receiverQ.add(b);
+				receiverQ.add(b); //adding the broadcast to his message queue
 
 				synchronized (receiverQ) {
 					if (needToAlert) {
-						receiverQ.notify();
+						receiverQ.notify(); //notifying the microservice if he is waiting for a message
 					}
 				}
 				i++;
@@ -102,23 +102,23 @@ public class MessageBusImpl implements MessageBus {
 	public <T> Future<T> sendEvent(Event<T> e) {
 		Future<T> f = new Future<>();
 		boolean needToAlert = false;
-		OnGoingEvents.put(e, f);
+		OnGoingEvents.put(e, f); //adding the future to the list
 		LinkedBlockingQueue<MicroService> receiversQ = EventSubscribers.get(e.getClass());
 		if (receiversQ == null || receiversQ.isEmpty()) {
 			return null;
 		}
 		MicroService receiver;
-		synchronized (EventSubscribers) {
+		synchronized (EventSubscribers) { //have to syncronise to preserve round robin
 			receiver = receiversQ.remove();
 			receiversQ.add(receiver);
 		}
 		ConcurrentLinkedQueue<Message> receiverQ = MessageQueues.get(receiver);
 		if (receiverQ.isEmpty()) needToAlert = true;
-		MessageQueues.get(receiver).add(e);
+		MessageQueues.get(receiver).add(e); //adding the even to the microservice's message queue
 
 		if (needToAlert) {
 			synchronized (receiverQ) {
-				receiverQ.notify();
+				receiverQ.notify(); //notifying the microservice if he is waiting for a message
 			}
 		}
 		return f;
@@ -128,7 +128,7 @@ public class MessageBusImpl implements MessageBus {
 	@Override
 	public void register(MicroService m) {
 		ConcurrentLinkedQueue<Message> q = new ConcurrentLinkedQueue<>();
-		MessageQueues.put(m, q);
+		MessageQueues.put(m, q); //creating a message queue for the microservice
 	}
 
 	@Override
@@ -136,7 +136,7 @@ public class MessageBusImpl implements MessageBus {
 		synchronized (EventSubscribers) {
 			if (UnregistermapE.get(m) != null) {
 				for (Class<? extends Event> event : UnregistermapE.get(m)) {
-					EventSubscribers.get(event).remove(m);
+					EventSubscribers.get(event).remove(m); //removing the microservice from all his event queues
 				}
 			}
 		}
@@ -144,14 +144,14 @@ public class MessageBusImpl implements MessageBus {
 			if (UnregistermapB.get(m) != null) {
 				for (Class<? extends Broadcast> broadcast : UnregistermapB.get(m)) {
 					{
-						BroadcastSubscribers.get(broadcast).remove(m);
+						BroadcastSubscribers.get(broadcast).remove(m); //removing the microservice from all his broadcast lists
 					}
 				}
 			}
 		}
 			UnregistermapB.remove(m);
 			UnregistermapE.remove(m);
-			MessageQueues.remove(m);
+			MessageQueues.remove(m); //removing his message queue
 
 	}
 
@@ -163,7 +163,7 @@ public class MessageBusImpl implements MessageBus {
 			synchronized (q) {
 				if (q.isEmpty()) {
 					try {
-						q.wait();
+						q.wait(); //if the queue is empty, waiting for a notify on the message queue. notification happens either on send event or send broadcast
 					} catch (InterruptedException i) {
 					}
 				}
